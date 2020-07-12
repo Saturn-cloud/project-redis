@@ -1,0 +1,38 @@
+
+Question for our Dev Guy:
+=========================
+1. Redis version - required for configuring our elasticache cluster (options are 2.8, 3.2, 4.0 and 5.0)
+2. Redis engine version - ditto
+3. automatic backup and retention period
+4
+
+
+
+================  PLEASE ADD ANY OTHER RELEVANT QUESTIONS YOU MAY HAVE FOR THE DEV GUY ABOVE THIS LINE =====================
+
+According to our developer, his Spring-boot java code has a web interface. 
+
+We are therefore going to need to configure the following in the security group attached to the 
+ec2 instance (Redis Server) running the code:
+ - open port 8080 for tomcat (for Spring-boot Java) 
+ - allow traffic from the acceptable sources (Dev guy to confirm)
+ - allow the port to send traffic to the desired destination (Dev guy to confirm)
+
+ - open port 6379 for Redis to communicate from
+ - allow traffic from the our ElastiCache cluster
+ - allow the port to send traffic to all destination within our VPC
+
+ - open port 22 for SSH connections to the instance 
+ - allow traffic from the all sources (Dev guy to confirm)
+ - allow the port to send traffic to all destination (Dev guy to confirm)
+
+
+
+
+
+================  PLEASE ADD ANY OTHER RELEVANT ITEMS WE MAY NEED TO INCLUDE IN OUR DELIVERABLE ABOVE THIS LINE  ===================
+
+
+ 
+
+
