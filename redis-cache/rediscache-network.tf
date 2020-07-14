@@ -164,6 +164,7 @@ resource "aws_elasticache_security_group" "rediscache-secgrp" {
   name                 = "rediscache-security-group"
   security_group_names = ["${aws_security_group.rediscluster-secgrp.name}"]
 }
+
 */
 
 

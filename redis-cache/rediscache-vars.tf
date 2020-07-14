@@ -76,5 +76,6 @@ variable "redis-engine-version" {
 variable "redis-port" {
  type = string
  default = "6379"
+ 
 }
 

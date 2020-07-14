@@ -14,4 +14,5 @@ output "host" {
   value       = module.dns.hostname
   description = "Redis hostname"
 }
+
 */
