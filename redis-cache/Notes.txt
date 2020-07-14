@@ -1,0 +1,95 @@
+
+List of deliverables:
+=====================
+1.
+Create ElastiCache Cluster for Redis
+Redis Setting:
+ - Name
+ - Description
+ - Engine Version compatibility
+ - Port = 6379
+ - Parameter Groups = default.redis3.2
+ - Node type
+ - Number of replicas
+ - Subnet group 
+		- Name
+		- Description
+		- VPCD ID
+		- Subnets
+ - Security Groups
+ - Availability Zones
+
+Take note of the Primary Endpoint created - can also be found on the ElastiCache Dashboard > Redis > Nodes tab
+
+2.
+Create an EC2 instance (for the Redis Server) and connect it to the ElastiCache Cluster for Redis
+ - install Git, Maven and GCC on the server
+ 	- run the following commands to install Redis:
+ 	- wget http://download.redis.io/redis-stable.tar.gz
+ 	- tar xvzf redis-stable.tar.gz
+ 	- cd redis-stable
+ 	- make
+ - run the following command to connect the Redis server to the elastiCache Cluster for Redis
+ 	- src/redis-cli -c -h <our primary endpoint> -p 6379
+ 
+According to our developer, his Spring-boot java code has a web interface which uses Swagger API. 
+We are therefore going to need to configure the following in the security group attached to the 
+ec2 instance (Redis Server) running the code:
+ - open port 8080 for tomcat (for Spring-boot Java) 
+ - allow traffic from the acceptable sources (Dev guy to confirm)
+ - allow the port to send traffic to the desired destination (Dev guy to confirm)
+
+ - open port 6379 for Redis to communicate from
+ - allow traffic from the our ElastiCache cluster
+ - allow the port to send traffic to all destination within our VPC
+
+ - open port 22 for SSH connections to the instance 
+ - allow traffic from the all sources (Dev guy to confirm)
+ - allow the port to send traffic to all destination (Dev guy to confirm)
+
+3.
+Confirm that the following are present in the pom.xml of the Spring-boot application code to cater for Redis:
+ - Go to pom.xml > in the <dependency> block <artifactId>spring-boot-starter-cache<artifactId> replace starter-cache with data-redis
+ - Go to src/main/resources/application.properties make sure the entries show the following:
+						 - spring.cache.type=redis
+						 - spring.redis.host=localhost (replace localhost with our primary endpoint)
+						 - spring.redis.port=6379
+
+4.
+To deploy the code, run the following commands:
+
+ - git clone https://github.com/deji-bit/spring-boot-elasticache-redis-tutorial.git
+ - cd spring-boot-elasticache-redis-tutorial
+ - mvn clean package
+ - cd target
+ - java -jar example 0.0.1-SNAPSHOT
+
+
+5.
+Question for our Dev Guy:
+=========================
+1. Redis version - required for configuring our elasticache cluster (options are 2.8, 3.2, 4.0 and 5.0)
+2. Redis engine version - ditto
+3. automatic backup and retention period
+4. Replica required and how many?
+5. Encryption required?
+
+
+
+[ec2-user@ip-10-0-0-200 ~]$ history
+    1  sudo yum update -y and sudo yum install -y git maven gcc
+    2  git --version
+    3  mvn --version
+    4  gcc --version
+    5  wget http://download.redis.io/redis-stable.tar.gz
+    6  tar xvzf redis-stable.tar.gz
+    7  cd redis-stable
+    8  make
+    9  src/redis-cli -c -h saturn-rediscache.218wyu.0001.euw2.cache.amazonaws.com -p 6379
+   10  git clone https://github.com/deji-bit/spring-boot-elasticache-redis-tutorial.git
+   11  cd spring-boot-elasticache-redis-tutorial
+   12  mvn clean package
+   13  cd target
+   14  java -jar example 0.0.1-SNAPSHOT
+
+
