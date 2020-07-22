@@ -18,7 +18,7 @@ resource "aws_internet_gateway" "caching-igw" {
   vpc_id = aws_vpc.caching-vpc.id
   
   tags = {
-    Name = "igw-caching"
+    Name = "rediscache-igw"
   }
 }
 
@@ -34,20 +34,19 @@ resource "aws_route_table" "caching-rtb" {
   }
 
   tags = {
-    Name = "rtb-caching"
+    Name = "rediscache-rtb"
   }
 }
 
 
-
-### Create 1 Subnet to make up our Subnet Group to launch our Cluster in ###
+### Create 2 Subnets to make up the Subnet Group to launch our Cluster in ###
 
 ##  Subnet A
 ##  ========
 resource "aws_subnet" "caching-subneta" {
   vpc_id            = aws_vpc.caching-vpc.id
   cidr_block        = var.subneta_cidr_block
-  availability_zone = "eu-west-2a"
+  availability_zone = var.zone-a
   map_public_ip_on_launch = "true"
 
   tags = {
@@ -55,15 +54,12 @@ resource "aws_subnet" "caching-subneta" {
   }
 }
 
-
-### Create 2 additional Subnets: 1 to launch an EC2 instance into as our Redis Server and 1 for our Jenkins server ###
-
 ##  Subnet B
 ##  ========
 resource "aws_subnet" "caching-subnetb" {
   vpc_id = aws_vpc.caching-vpc.id
   cidr_block = var.subnetb_cidr_block
-  availability_zone = "eu-west-2b"
+  availability_zone = var.zone-b
   map_public_ip_on_launch = "true"
 
   tags = {
@@ -71,12 +67,14 @@ resource "aws_subnet" "caching-subnetb" {
   }
 }
 
+### Create 2 additional Subnets: 1 to launch an EC2 instance into for our Redis Server and 1 for Jenkins server (for our pipeline) ###
+
 ##  Subnet C
 ##  ========
 resource "aws_subnet" "caching-subnetc" {
   vpc_id            = aws_vpc.caching-vpc.id
   cidr_block        = var.subnetc_cidr_block
-  availability_zone = "eu-west-2c"
+  availability_zone = var.zone-c
   map_public_ip_on_launch = "true"
 
   tags = {
@@ -89,7 +87,7 @@ resource "aws_subnet" "caching-subnetc" {
 resource "aws_subnet" "caching-subnetd" {
   vpc_id = aws_vpc.caching-vpc.id
   cidr_block = var.subnetd_cidr_block
-  availability_zone = "eu-west-2b"
+  availability_zone = var.zone-b
   map_public_ip_on_launch = "true"
 
   tags = {
@@ -119,23 +117,22 @@ resource "aws_route_table_association" "caching-rtbassd" {
   route_table_id = aws_route_table.caching-rtb.id
 }
 
-### Assign a Subnet for our Redis Cluster's Subnet Group ###
+### Assign Subnets A and B to our Redis Cluster's Subnet Group ###
 
 resource "aws_elasticache_subnet_group" "rediscluster-subgrp" {
-  name       = "subgrp-rediscluster"
-  subnet_ids = ["${aws_subnet.caching-subneta.id}"]
+  name       = "caching-subgrp"
+  subnet_ids = ["${aws_subnet.caching-subneta.id}", "${aws_subnet.caching-subnetb.id}"]
 }
 
 
-### Create the Security Group to attach to our Redis Cluster
-/*
-resource "aws_security_group" "rediscluster-secgrp" {
-  name = "rediscluster-sg"
+### Create the Security Group to attach to our elasticache replication group
+
+resource "aws_security_group" "repgrp-secgrp" {
+  name = var.caching-cluster-secgrp
   vpc_id = aws_vpc.caching-vpc.id
 
   tags = {
-    Name = "sg-rediscluster"
-    
+    Name = "rediscluster-sg"
   }
 
 ###  ALL INBOUND
@@ -160,11 +157,98 @@ resource "aws_security_group" "rediscluster-secgrp" {
   }
 }
 
-resource "aws_elasticache_security_group" "rediscache-secgrp" {
-  name                 = "rediscache-security-group"
-  security_group_names = ["${aws_security_group.rediscluster-secgrp.name}"]
+
+### Create the Security Group to attach to our Redis server
+
+resource "aws_security_group" "rediserver-secgrp" {
+  name = "rediserver-sg"
+  vpc_id = aws_vpc.caching-vpc.id
+
+  tags = {
+    Name = "rediserver-sg"
+    
+  }
+
+###  ALL INBOUND
+
+# Redis port
+  ingress {
+    from_port         = 6379
+    to_port           = 6379
+    protocol          = "tcp"
+    cidr_blocks       = ["172.31.12.0/24"]
+    description = "traffic allowed from sources within the network ONLY"
+  }
+# Swagger webUI port
+  ingress {
+    from_port         = 8080
+    to_port           = 8080
+    protocol          = "tcp"
+    cidr_blocks       = ["0.0.0.0/0"]
+    description = "traffic allowed from all sources"
+  }
+# SSH port
+  ingress {
+    from_port         = 22
+    to_port           = 22
+    protocol          = "tcp"
+    cidr_blocks       = ["0.0.0.0/0"]
+    description = "traffic allowed from all sources"
+  }
+
+
+###  ALL OUTBOUND 
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "allow traffic to all destinations"
+  }
 }
 
-*/
 
+### Create the Security Group to attach to our Jenkins server
+
+resource "aws_security_group" "jenkinserver-secgrp" {
+  name = "jenkins-sg"
+  vpc_id = aws_vpc.caching-vpc.id
+
+  tags = {
+    Name = "redis-jenkins-sg"
+    
+  }
+
+###  ALL INBOUND
+
+# SSH port
+  ingress {
+    from_port         = 22
+    to_port           = 22
+    protocol          = "tcp"
+    cidr_blocks       = ["0.0.0.0/0"]
+    description = "traffic allowed from all sources"
+  }
+
+# Jenkins webUI port
+  ingress {
+    from_port         = 8080
+    to_port           = 8080
+    protocol          = "tcp"
+    cidr_blocks       = ["0.0.0.0/0"]
+    description = "traffic allowed from all sources"
+  }
+
+
+###  ALL OUTBOUND 
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "allow traffic to all destinations"
+  }
+}
 

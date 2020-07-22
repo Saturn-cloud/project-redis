@@ -1,0 +1,96 @@
+
+List of deliverables:
+=====================
+1.
+Create ElastiCache Cluster for Redis
+Redis Setting:
+ - Name
+ - Description
+ - Engine Version compatibility
+ - Port = 6379
+ - Parameter Groups = default.redis3.2
+ - Node type
+ - Number of replicas
+ - Subnet group 
+		- Name
+		- Description
+		- VPCD ID
+		- Subnets
+ - Security Groups
+ - Availability Zones
+
+Take note of the Configuration Endpoint created for the cluster (replication 
+group) - can also be found on the ElastiCache Dashboard > Redis > Nodes tab
+
+2.
+Create an EC2 instance (for the Redis Server) and connect it to the ElastiCache Cluster for Redis
+ - use an AMI baked with the following:
+	- install GCC and Java 8 
+ - run the following commands to install Redis:
+ 	- wget http://download.redis.io/redis-stable.tar.gz
+ 	- tar xvzf redis-stable.tar.gz
+ 	- cd redis-stable
+ 	- make
+ 
+According to our developer, his Spring-boot java code has a web interface which uses Swagger API. 
+We are therefore going to need to configure the following in the security group attached to the 
+ec2 instance (Redis Server) which will run the code:
+ - open port 8080 for tomcat (for Spring-boot Java) 
+ - allow traffic from the acceptable sources (Dev guy to confirm)
+ - allow the port to send traffic to the desired destination (Dev guy to confirm)
+
+ - open port 6379 for Redis to communicate from
+ - allow traffic from the our ElastiCache cluster
+ - allow the port to send traffic to all destination within our VPC
+
+ - open port 22 for SSH connections to the instance 
+ - allow traffic from the all sources (Dev guy to confirm)
+ - allow the port to send traffic to all destination (Dev guy to confirm)
+
+3.
+Confirm that the following are present in the pom.xml of the Spring-boot application code to cater for Redis:
+ - Go to pom.xml > in the <dependency> block <artifactId>spring-boot-starter-cache<artifactId> replace starter-cache with data-redis
+ - Go to src/main/resources/application.properties make sure the entries show the following:
+						 - spring.cache.type=redis
+						 - spring.redis.host=localhost (replace localhost with our configuration endpoint)
+						 - spring.redis.port=6379
+
+4.
+Create an EC2 instance for the Jenkins Server and 
+ - use an AMI baked with the following:
+	 - install Git and Maven 
+ - To deploy the code, set up a jenkins pipeline job to run the following commands:
+ - step (1) jenkins to ssh into our Redis server start a connection to our cluster using this command "src/redis-cli -c -h <our configuration endpoint> -p 6379"
+ - step (2) git clone https://github.com/deji-bit/spring-boot-elasticache-redis-tutorial.git
+ - step (3) cd spring-boot-elasticache-redis-tutorial
+ - step (4) run mvn clean package
+ - step (5) cd target
+ - step (6) scp our "example-0.0.1-SNAPSHOT" to /tmp/ directory on our Redis server
+ - step (7) ssh into the Redis server /tmp/ directory and run the following command:
+		- "mkdir target"
+                - "cp example 0.0.1-SNAPSHOT from /tmp/ into target"
+		- "cd into target folder"
+		- "nohup java -jar example-0.0.1-SNAPSHOT &" to deploy the app
+
+
+5.
+Question for our Dev Guy:
+=========================
+1. Redis version - required for configuring our elasticache cluster (options are 2.8, 3.2, 4.0 and 5.0) = open to any
+2. Redis engine version - ditto - open to any
+3. automatic backup and retention period - not required
+4. Replica required and how many? - not required
+5. Encryption required? - not required
+
+
+Keep for jenkins-ami
+====================
+
+"sudo yum update -y", "sudo yum install -y git maven",
+		      "priority=10", 
+			  "sudo wget -O /etc/yum.repos.d/jenkins.repo http://pkg.jenkins.io/redhat/jenkins.repo",
+			  "sudo rpm --import http://pkg.jenkins.io/redhat/jenkins.io.key",
+			  "sudo yum upgrade",
+			  "sudo yum install -y jenkins" ,
+		      "sudo systemctl start jenkins"
+
