@@ -1,4 +1,5 @@
 
+<<<<<<< HEAD
 List of deliverables activities:
 ===============================
 1.
@@ -33,6 +34,21 @@ Create an EC2 instance (for the Redis Server) and connect it to the ElastiCache 
  	- src/redis-cli -c -h <our primary endpoint> -p 6379
  
 According to our developer, his Spring-boot java code has a web interface which uses Swagger API. 
+=======
+Question for our Dev Guy:
+=========================
+1. Redis version - required for configuring our elasticache cluster (options are 2.8, 3.2, 4.0 and 5.0)
+2. Redis engine version - ditto
+3. automatic backup and retention period
+4
+
+
+
+================  PLEASE ADD ANY OTHER RELEVANT QUESTIONS YOU MAY HAVE FOR THE DEV GUY ABOVE THIS LINE =====================
+
+According to our developer, his Spring-boot java code has a web interface. 
+
+>>>>>>> deji-tfcode
 We are therefore going to need to configure the following in the security group attached to the 
 ec2 instance (Redis Server) running the code:
  - open port 8080 for tomcat (for Spring-boot Java) 
@@ -47,6 +63,7 @@ ec2 instance (Redis Server) running the code:
  - allow traffic from the all sources (Dev guy to confirm)
  - allow the port to send traffic to all destination (Dev guy to confirm)
 
+<<<<<<< HEAD
 3.
 Confirm that the following are present in the pom.xml of the Spring-boot application code to cater for Redis:
  - Go to pom.xml > in the <dependency> block <artifactId>spring-boot-starter-cache<artifactId> replace starter-cache with data-redis
@@ -86,6 +103,8 @@ Question for our Dev Guy:
 6.
 7.
 8.
+=======
+>>>>>>> deji-tfcode
 
 
 

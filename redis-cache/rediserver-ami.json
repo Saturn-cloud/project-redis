@@ -1,0 +1,32 @@
+{
+  "variables": {
+    "aws_access_key": "",
+    "aws_secret_key": ""
+  },
+
+  "builders": [
+     {
+	    "type": "amazon-ebs",
+	    "access_key": "{{user `aws_access_key`}}",
+	    "secret_key": "{{user `aws_secret_key`}}",
+	    "region": "eu-west-2",
+	    "source_ami": "ami-032598fcc7e9d1c7a",
+	    "instance_type": "t2.micro",
+	    "ssh_username": "ec2-user",
+	    "ami_name": "redis-server-ami"
+     }
+  ],
+  "provisioners": [
+     {
+      "type": "shell",
+      "inline": ["sudo yum update -y", 
+                 "sudo yum install -y java-1.8.0-openjdk-devel.x86_64",
+                 "sudo yum install -y gcc",
+		             "wget http://download.redis.io/redis-stable.tar.gz",
+		             "tar xvzf redis-stable.tar.gz",
+		             "cd redis-stable", 
+		             "make"]
+     }
+  ]
+}
+

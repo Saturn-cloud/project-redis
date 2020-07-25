@@ -4,4 +4,8 @@
 *.pem
 *.ppk
 *.log
+<<<<<<< HEAD
 *.pub
+=======
+*.pub
+>>>>>>> deji-tfcode
