@@ -19,9 +19,6 @@ resource "aws_internet_gateway" "caching-igw" {
   
   tags = {
     Name = "igw-caching"
-=======
-    Name = "rediscache-igw"
->>>>>>> deji-tfcode
   }
 }
 
